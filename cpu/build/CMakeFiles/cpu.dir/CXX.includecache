@@ -1,0 +1,16 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/benebene/Dokumente/coding/cuda/fft_gpu/cpu/src/main.cpp
+time.h
+-
+fftw3.h
+-
+sndfile.hh
+-
+
