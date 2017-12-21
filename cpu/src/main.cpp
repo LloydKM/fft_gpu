@@ -3,6 +3,7 @@
 #include <sndfile.hh>
 
 int main() {
+    //TODO crazy shit with sndfile
 
     //TODO allocating
 
