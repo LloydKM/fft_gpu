@@ -1,1 +1,1 @@
-/usr/bin/c++   -std=c++11   CMakeFiles/cpu.dir/src/main.cpp.o  -o cpu 
+/usr/bin/c++   -std=c++11   CMakeFiles/cpu.dir/src/main.cpp.o  -o cpu -lfftw3 
