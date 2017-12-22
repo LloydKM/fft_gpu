@@ -1,1 +1,1 @@
-/usr/bin/c++   -std=c++11 -Wall -Werror -Wno-write-strings   CMakeFiles/cpu.dir/src/main.cpp.o  -o cpu -lfftw3 -lsndfile 
+/usr/bin/c++   -std=c++11 -Wall -Werror   CMakeFiles/cpu.dir/src/main.cpp.o  -o cpu -lfftw3 -lsndfile 

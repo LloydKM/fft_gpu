@@ -19,10 +19,10 @@ int main(int argc, char** argv) {
     //use test file if none is passed
     if( argc < 2) {
         fname = (char*) malloc(16 * sizeof(char));
-        fname = "../src/test.wav";
+        strcpy(fname, "../src/test.wav");
     } else {
-        fname = (char*) malloc(strlen(argv[1]) * sizeof(char));
-        fname = argv[1];
+        fname = (char*) malloc((strlen(argv[1])+1) * sizeof(char));
+        strcpy(fname, argv[1]);
     }
 
     SNDFILE* input = sf_open(fname, SFM_READ, &read_info);
