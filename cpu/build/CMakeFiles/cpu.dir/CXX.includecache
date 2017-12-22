@@ -9,8 +9,14 @@
 /home/benebene/Dokumente/coding/cuda/fft_gpu/cpu/src/main.cpp
 time.h
 -
+stdio.h
+-
+stdlib.h
+-
+string.h
+-
 fftw3.h
 -
-sndfile.hh
+sndfile.h
 -
 
