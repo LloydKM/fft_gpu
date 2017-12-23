@@ -1,1 +1,1 @@
-/usr/bin/c++   -std=c++14 -Wall -Werror   CMakeFiles/cpu.dir/src/main.cpp.o  -o cpu -lfftw3 -lsndfile 
+/usr/bin/c++   -g -O0 -std=c++14 -Wall -Werror   CMakeFiles/cpu.dir/src/main.cpp.o  -o cpu -lfftw3 -lsndfile 

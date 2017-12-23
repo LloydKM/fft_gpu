@@ -6,6 +6,8 @@
 #include <fftw3.h>
 #include <sndfile.h>
 
+#define BUFFER_SIZE 1024
+
 //Linux implementation
 
 int main(int argc, char** argv) {
@@ -15,6 +17,7 @@ int main(int argc, char** argv) {
     read_info.format = 0;
 
     char* fname;
+    int* buffer = (int*) malloc(BUFFER_SIZE * sizeof(int));
 
     //use test file if none is passed
     if( argc < 2) {
@@ -37,6 +40,9 @@ int main(int argc, char** argv) {
     //TODO calculating
     //fftw
     #if 1
+    while(sf_readf_int(input, buffer, BUFFER_SIZE) != 0){
+        //printf("%d\n", buffer[0] );
+    }
 
     //own fft
     #else
@@ -46,10 +52,11 @@ int main(int argc, char** argv) {
     //end timing
     clock_t tend = clock();
     //final tim
-    double telapsed = (double)(tend - tstart)    / CLOCKS_PER_SEC;
+    double telapsed = (double)(tend - tstart) / CLOCKS_PER_SEC;
     printf( "time elapsed = %2.4f sec\n", telapsed);
 
     //TODO cleanup memory
+    free(buffer);
     free(fname);
     if (sf_close(input) != 0) printf("cleanup failed!\n");
 
