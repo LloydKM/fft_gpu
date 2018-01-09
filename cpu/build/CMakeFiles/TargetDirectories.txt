@@ -1,3 +1,0 @@
-/home/benebene/Dokumente/coding/cuda/fft_gpu/cpu/build/CMakeFiles/rebuild_cache.dir
-/home/benebene/Dokumente/coding/cuda/fft_gpu/cpu/build/CMakeFiles/cpu.dir
-/home/benebene/Dokumente/coding/cuda/fft_gpu/cpu/build/CMakeFiles/edit_cache.dir
