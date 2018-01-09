@@ -1,10 +1,15 @@
-cmake_minimum_required(VERSION 3.6)
-project(cpu)
+# CMakeLists.txt
+cmake_minimum_required(VERSION 2.8)
+project(fft)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -std=c++14 -Wall -Werror")
+set( CMAKE_CURRENT_BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set( ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set( SRC_DIR ${ROOT_DIR}/src)
 
-set(SOURCE_FILES
-    src/main.cpp)
+set(SOURCE
+   ${SRC_DIR}/main.cpp
+)
 
-add_executable(cpu ${SOURCE_FILES})
-target_link_libraries(cpu fftw3 sndfile)
+set( CMAKE_C_FLAGS "-g -W -Wall -Wno-unused-parameter")
+
+add_executable( foo ${SOURCE})

@@ -1,64 +1,55 @@
-#include <time.h>
-#include <stdio.h>
+#include <vector>
+#include <iostream>
 #include <stdlib.h>
-#include <string.h>
+#include <cmath>
+#include <complex>
+#include <iomanip>
 
-#include <fftw3.h>
-#include <sndfile.h>
+typedef std::complex<double> comp;
+#define li comp(0,1)
 
-#define BUFFER_SIZE 1024
-
-//Linux implementation
+std::vector<comp> fft(int n, std::vector<comp> freqs);
 
 int main(int argc, char** argv) {
+  std::vector<comp> test = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+  std::vector<comp> fftv = fft(test.size(), test);
+  std::cout << fftv.size() << std::endl;
+  for (auto const& value: fftv) {
+    std::cout << value << std::endl;
+  }  
+}
 
-    //set SF_INFO to properly open file to read
-    SF_INFO read_info;
-    read_info.format = 0;
+std::vector<comp> fft(int n, std::vector<comp> freqs) {
+  //trivial case - return solution
+  if ( n == 1) {
+    return freqs;
+  }
 
-    char* fname;
-    int* buffer = (int*) malloc(BUFFER_SIZE * sizeof(int));
-
-    //use test file if none is passed
-    if( argc < 2) {
-        fname = (char*) malloc(16 * sizeof(char));
-        strcpy(fname, "../src/test.wav");
+  //split freq vector in vector with even and vector with odd values
+  std::vector<comp> even_freqs, odd_freqs;
+  
+  //copy freqs in corresponding vectors
+  for (unsigned int i = 0; i < freqs.size(); i++) {     
+    //even or odd index
+    if (i%2 == 0) {
+      even_freqs.push_back(freqs[i]);
     } else {
-        fname = (char*) malloc((strlen(argv[1])+1) * sizeof(char));
-        strcpy(fname, argv[1]);
+      odd_freqs.push_back(freqs[i]);
     }
+  }
+  
+  //run fft on new vecs
+  std::vector<comp> even = fft(n/2, even_freqs);
+  std::vector<comp> odd = fft(n/2, odd_freqs);
+  
+  //return array for values of fft
+  std::vector<comp> c(n);
 
-    SNDFILE* input = sf_open(fname, SFM_READ, &read_info);
-    if (input == NULL){
-        printf("YOU FAIL!\n");
-        return -1;
-    }
+  for (unsigned int i = 0; i < n/2; i++) {
+    //complex fft math. easy because complex cpp lib
+    c[i] = even[i] + odd[i] * exp(comp(-2,0)*li*M_PI*comp(i,0)/comp(n,0));
+    c[i+n/2] = even[i] - odd[i] * exp(comp(-2,0)*li*M_PI*comp(i,0)/comp(n,0));
+  }
 
-    //start timing
-    clock_t tstart = clock();
-
-    //TODO calculating
-    //fftw
-    #if 1
-    while(sf_readf_int(input, buffer, BUFFER_SIZE) != 0){
-        //printf("%d\n", buffer[0] );
-    }
-
-    //own fft
-    #else
-
-    #endif
-
-    //end timing
-    clock_t tend = clock();
-    //final tim
-    double telapsed = (double)(tend - tstart) / CLOCKS_PER_SEC;
-    printf( "time elapsed = %2.4f sec\n", telapsed);
-
-    //TODO cleanup memory
-    free(buffer);
-    free(fname);
-    if (sf_close(input) != 0) printf("cleanup failed!\n");
-
-	return 0;
+  return c;
 }
