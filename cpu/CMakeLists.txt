@@ -8,8 +8,11 @@ set( SRC_DIR ${ROOT_DIR}/src)
 
 set(SOURCE
    ${SRC_DIR}/main.cpp
+   ${SRC_DIR}/sndread.cpp
 )
 
 set( CMAKE_C_FLAGS "-g -W -Wall -Wno-unused-parameter")
 
 add_executable( foo ${SOURCE})
+
+target_link_libraries(foo sndfile)

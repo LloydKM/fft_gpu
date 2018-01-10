@@ -5,15 +5,22 @@
 #include <complex>
 #include <iomanip>
 
+#include "sndread.h"
+
 typedef std::complex<double> comp;
 #define li comp(0,1)
+#define F_PATH "../src/test.wav"
 
 std::vector<comp> pad_with_zero(std::vector<comp> v);
 std::vector<comp> fft(std::vector<comp> freqs);
 std::vector<comp> _fft(int n, std::vector<comp> freqs);
 
 int main(int argc, char** argv) {
-  std::vector<comp> test = {1,2,3,4,5};
+  read_file(F_PATH);
+  std::vector<comp> test;
+  for (int i = 1; i <= 16; i++) {
+    test.push_back(i);
+  } 
   std::vector<comp> fftv = fft(test);
   for (auto const& value: fftv) {
     std::cout << value << std::endl;
