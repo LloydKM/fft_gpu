@@ -8,18 +8,50 @@
 typedef std::complex<double> comp;
 #define li comp(0,1)
 
-std::vector<comp> fft(int n, std::vector<comp> freqs);
+std::vector<comp> pad_with_zero(std::vector<comp> v);
+std::vector<comp> fft(std::vector<comp> freqs);
+std::vector<comp> _fft(int n, std::vector<comp> freqs);
 
 int main(int argc, char** argv) {
-  std::vector<comp> test = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-  std::vector<comp> fftv = fft(test.size(), test);
-  std::cout << fftv.size() << std::endl;
+  std::vector<comp> test = {1,2,3,4,5};
+  std::vector<comp> fftv = fft(test);
   for (auto const& value: fftv) {
     std::cout << value << std::endl;
   }  
 }
 
-std::vector<comp> fft(int n, std::vector<comp> freqs) {
+std::vector<comp> pad_with_zero(std::vector<comp> v) {
+  int new_size = 0;
+  int exponent = 0;
+  //get next greater power of two
+  while (new_size < v.size()) {
+    new_size = pow(2, exponent++);
+  }
+
+  //pad vector with zeroes
+  int v_size = v.size();
+  for (int i = 0; i < (new_size - v_size); i++) {
+    v.push_back(comp(0,0));
+  }
+  return v;
+}
+
+std::vector<comp> fft(std::vector<comp> freqs) {
+  int n = freqs.size();
+  //check if length is power of two
+  if (n & (n-1) == 0) {
+    return _fft(n, freqs);
+  } else {
+    //padding with zeroes
+    std::cout << "padding" << std::endl;
+    std::vector<comp> padded = pad_with_zero(freqs);
+    std::cout << std::endl;
+    return _fft(padded.size(), padded);
+  }
+
+}
+
+std::vector<comp> _fft(int n, std::vector<comp> freqs) {
   //trivial case - return solution
   if ( n == 1) {
     return freqs;
@@ -39,8 +71,8 @@ std::vector<comp> fft(int n, std::vector<comp> freqs) {
   }
   
   //run fft on new vecs
-  std::vector<comp> even = fft(n/2, even_freqs);
-  std::vector<comp> odd = fft(n/2, odd_freqs);
+  std::vector<comp> even = _fft(n/2, even_freqs);
+  std::vector<comp> odd = _fft(n/2, odd_freqs);
   
   //return array for values of fft
   std::vector<comp> c(n);
