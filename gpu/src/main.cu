@@ -1,3 +1,4 @@
+#include <cmath>
 #include <iostream>
 #include <algorithm>
 #include "cuda_util.h"
@@ -10,10 +11,10 @@ __global__ void fftOvgu(float* data) {
 //program entry point
 int main(int /*argc*/, char** /*argv*/) {
 
-  int n = 8;
+  const int n = 8;
   //generate input data
   float* data = (float*) malloc(sizeof(float)*n);
-  for(int i = 0; i < n; i++) {
+  for (int i = 0; i < n; i++) {
     data[i] = (float) i+1;
   }
 
@@ -41,11 +42,18 @@ int main(int /*argc*/, char** /*argv*/) {
   //copy device memory
   checkErrorsCuda( cudaMemcpy( (void*) data_device, data, sizeof(float) * n, cudaMemcpyHostToDevice ));
 
-  //TODO:determine thread layout
+  //determine thread layout
+  const int MAX_THREADS_PER_BLOCK = devProp.maxThreadsPerBlock;
+  int num_threads_per_block = std::min(n, MAX_THREADS_PER_BLOCK);
+  int num_blocks = n/MAX_THREADS_PER_BLOCK;
+  if( 0 != n % MAX_THREADS_PER_BLOCK) {
+    num_blocks++;
+  }
+  std::cout << "num_blocks = " << num_blocks << "num_threads_per_block = " << num_threads_per_block << std::endl;
 
 
-  //TODO:run kernel
-
+  //run kernel
+  fftOvgu <<< num_blocks, num_threads_per_block >>> (data_device); 
 
   //copy result back
   checkErrorsCuda( cudaMemcpy( data, data_device, sizeof(float) * n, cudaMemcpyDeviceToHost));
@@ -53,4 +61,5 @@ int main(int /*argc*/, char** /*argv*/) {
   //clean memory
   checkErrorsCuda( cudaFree( data_device));
   free(data);
+  return EXIT_SUCCESS;
 }
