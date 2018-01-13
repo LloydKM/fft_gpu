@@ -1,7 +1,8 @@
 #include <sndfile.hh>
 #include <cstdio>
 #include <cstring>
+#include <vector>
 
-#define BUFFER_LEN 8
+#define BUFFER_LEN 1024
 
-void read_file(const char* fname);
+std::vector<int> read_file(const char* fname);

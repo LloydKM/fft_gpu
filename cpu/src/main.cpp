@@ -9,22 +9,22 @@
 
 typedef std::complex<double> comp;
 #define li comp(0,1)
-#define F_PATH "../src/test.wav"
+#define F_PATH "../src/briOPETH.wav"
 
 std::vector<comp> pad_with_zero(std::vector<comp> v);
 std::vector<comp> fft(std::vector<comp> freqs);
 std::vector<comp> _fft(int n, std::vector<comp> freqs);
 
 int main(int argc, char** argv) {
-  read_file(F_PATH);
-  std::vector<comp> test;
-  for (int i = 1; i <= 16; i++) {
-    test.push_back(i);
-  } 
-  std::vector<comp> fftv = fft(test);
+  std::vector<int> test = read_file(F_PATH);
+  std::vector<comp> v;
+  for (auto const& val: test) {
+    v.push_back(comp(val,0));
+  }
+  std::vector<comp> fftv = fft(v);
   for (auto const& value: fftv) {
     std::cout << value << std::endl;
-  }  
+  }
 }
 
 std::vector<comp> pad_with_zero(std::vector<comp> v) {
@@ -66,9 +66,9 @@ std::vector<comp> _fft(int n, std::vector<comp> freqs) {
 
   //split freq vector in vector with even and vector with odd values
   std::vector<comp> even_freqs, odd_freqs;
-  
+
   //copy freqs in corresponding vectors
-  for (unsigned int i = 0; i < freqs.size(); i++) {     
+  for (unsigned int i = 0; i < freqs.size(); i++) {
     //even or odd index
     if (i%2 == 0) {
       even_freqs.push_back(freqs[i]);
@@ -76,11 +76,11 @@ std::vector<comp> _fft(int n, std::vector<comp> freqs) {
       odd_freqs.push_back(freqs[i]);
     }
   }
-  
+
   //run fft on new vecs
   std::vector<comp> even = _fft(n/2, even_freqs);
   std::vector<comp> odd = _fft(n/2, odd_freqs);
-  
+
   //return array for values of fft
   std::vector<comp> c(n);
 
