@@ -4,8 +4,17 @@
 #include "cuda_util.h"
 
 //fft kernel
-__global__ void fftOvgu(float* data) {
+__global__ void fftOvgu(float* hdata) {
+  //determine thread id
+  unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
 
+  //shared memory
+  __shared__ float data[hdata.size()];
+
+  //read data to shared menory by using reversed bitorder
+  
+
+  //going up again and calculate ft
 }
 
 //program entry point
