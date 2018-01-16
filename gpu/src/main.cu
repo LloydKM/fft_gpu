@@ -13,23 +13,28 @@ __global__ void fftOvgu(float* hdata, const int hdata_size) {
   __shared__ float data[DATASIZE];
 
   //read data to shared menory by using reversed bitorder
-  unsigned int DATA_SIZE = DATASIZE;
-  unsigned int new_index = 0;
-  int b;
-  for (unsigned int i = 0; i < tid; i++) {
-    b = DATA_SIZE / 2;
-    while (b > 0) {
-      if (new_index >= b) {
-        new_index -= b;
-      } else {
-        new_index += b;
-        break;
+  if (tid == 0) {
+    data[0] = hdata[tid];
+  } else if (tid == DATASIZE - 1) {
+    data[DATASIZE - 1] = hdata[tid];
+  } else {
+    unsigned int DATA_SIZE = DATASIZE;
+    unsigned int new_index = 0;
+    int b;
+    for (unsigned int i = 0; i < tid; i++) {
+      b = DATA_SIZE / 2;
+      while (b > 0) {
+        if (new_index >= b) {
+          new_index -= b;
+        } else {
+          new_index += b;
+          break;
+        }
+        b /= 2;
       }
-      b /= 2;
     }
+    data[new_index] = hdata[tid];
   }
-  
-  data[new_index] = hdata[tid];
 
   //TODO: Sync threadblocks
 
