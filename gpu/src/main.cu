@@ -4,15 +4,34 @@
 #include "cuda_util.h"
 
 //fft kernel
-__global__ void fftOvgu(float* hdata) {
+template<int DATASIZE>
+__global__ void fftOvgu(float* hdata, const int hdata_size) {
   //determine thread id
   unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
 
   //shared memory
-  __shared__ float data[hdata.size()];
+  __shared__ float data[DATASIZE];
 
   //read data to shared menory by using reversed bitorder
+  unsigned int DATA_SIZE = DATASIZE;
+  unsigned int new_index = 0;
+  int b;
+  for (unsigned int i = 0; i < tid; i++) {
+    b = DATA_SIZE / 2;
+    while (b > 0) {
+      if (new_index >= b) {
+        new_index -= b;
+      } else {
+        new_index += b;
+        break;
+      }
+      b /= 2;
+    }
+  }
   
+  data[new_index] = hdata[tid];
+
+  //TODO: Sync threadblocks
 
   //going up again and calculate ft
 }
@@ -62,7 +81,7 @@ int main(int /*argc*/, char** /*argv*/) {
 
 
   //run kernel
-  fftOvgu <<< num_blocks, num_threads_per_block >>> (data_device); 
+  fftOvgu<n> <<< num_blocks, num_threads_per_block >>> (data_device, n); 
 
   //copy result back
   checkErrorsCuda( cudaMemcpy( data, data_device, sizeof(float) * n, cudaMemcpyDeviceToHost));
