@@ -4,9 +4,9 @@
 #include <thrust/complex.h>
 #include "cuda_util.h"
 
-//windows + visualstudio is a truckload of shit
+//windows + visual Studio is a truckload of shit
 #ifndef M_PI
-  #define M_PI 3.14159265358979323846
+	#define M_PI 3.14159265358979323846
 #endif
 
 typedef thrust::complex<float> comp;
@@ -55,13 +55,13 @@ __global__ void fftOvgu(comp* hdata) {
   comp a,b;
   comp quick_math;
   while (stride < DATASIZE) {
-    m = tid % stride;
-    printf("tid: %d = %d\n");
+	  m = tid % stride;
+	  //printf("tid: %d = %d\n", tid, m);
     quick_math = thrust::exp(comp(-2,0)*ci*comp(M_PI,0)*comp(m,0)/comp(block_size,0));
     if ((tid % block_size) < (block_size/2)) {
-      printf("tid %d entered\n", tid);
+		  //printf("tid: %d entered\n", tid);
       a = data[tid];
-      b = data[tid+stride]*quick_math;
+	    b = data[tid + stride]*quick_math;
       data[tid] = a + b;
       data[tid+stride] = a - b;
     }    
@@ -115,19 +115,19 @@ int main(int /*argc*/, char** /*argv*/) {
   if( 0 != n % MAX_THREADS_PER_BLOCK) {
     num_blocks++;
   }
-  std::cout << "num_blocks = " << num_blocks << "num_threads_per_block = " << num_threads_per_block << std::endl;
+  std::cout << "num_blocks = " << num_blocks << " num_threads_per_block = " << num_threads_per_block << std::endl;
 
 
   //run kernel
   fftOvgu<n> <<< num_blocks, num_threads_per_block >>> (data_device); 
-  
-  //print result
-  for (int i = 0; i < n; i++) {
-    std::cout << data[i] << std::endl;
-  }
 
   //copy result back
   checkErrorsCuda( cudaMemcpy( data, data_device, sizeof(comp) * n, cudaMemcpyDeviceToHost));
+
+  //print result
+  for (int i = 0; i < n; i++) {
+	  std::cout << data[i] << std::endl;
+  }
 
   //clean memory
   checkErrorsCuda( cudaFree( data_device));
