@@ -4,6 +4,11 @@
 #include <thrust/complex.h>
 #include "cuda_util.h"
 
+//windows + visualstudio is a truckload of shit
+#ifndef M_PI
+  #define M_PI 3.14159265358979323846
+#endif
+
 typedef thrust::complex<float> comp;
 #define ci comp(0,1)
 
@@ -46,18 +51,21 @@ __global__ void fftOvgu(comp* hdata) {
   //going up again and calculate ft
   unsigned int stride = 1;
   unsigned int block_size = 2;
-  unsigned int m = 1;
+  unsigned int m;
   comp a,b;
   comp quick_math;
   while (stride < DATASIZE) {
+    m = tid % stride;
+    printf("tid: %d = %d\n");
     quick_math = comp(-2,0)*ci*comp(M_PI,0)*comp(m,0)/comp(block_size,0);
     if ((tid % block_size) < (block_size/2)) {
+      printf("tid %d entered\n", tid);
       a = data[tid];
+      //TODO:b reads false value. fix this
       b = data[tid+stride]*quick_math;
       data[tid] = a + b;
       data[tid+stride] = a - b;
     }    
-    m += 1;
     block_size*= 2;
     stride *= 2;
     __syncthreads();
