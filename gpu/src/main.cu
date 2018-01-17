@@ -12,6 +12,9 @@ __global__ void fftOvgu(float* hdata, const int hdata_size) {
   //shared memory
   __shared__ float data[DATASIZE];
 
+  //global counter to sync threadblocks
+  __global__ int finished_threads = 0;
+
   //read data to shared menory by using reversed bitorder
   if (tid == 0) {
     data[0] = hdata[tid];
@@ -37,6 +40,8 @@ __global__ void fftOvgu(float* hdata, const int hdata_size) {
   }
 
   //TODO: Sync threadblocks
+  finished_threads += 1;
+  while (finished_threads < DATASIZE) {}
 
   //going up again and calculate ft
 }
