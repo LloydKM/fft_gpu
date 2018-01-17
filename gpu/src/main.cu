@@ -57,11 +57,10 @@ __global__ void fftOvgu(comp* hdata) {
   while (stride < DATASIZE) {
     m = tid % stride;
     printf("tid: %d = %d\n");
-    quick_math = comp(-2,0)*ci*comp(M_PI,0)*comp(m,0)/comp(block_size,0);
+    quick_math = thrust::exp(comp(-2,0)*ci*comp(M_PI,0)*comp(m,0)/comp(block_size,0));
     if ((tid % block_size) < (block_size/2)) {
       printf("tid %d entered\n", tid);
       a = data[tid];
-      //TODO:b reads false value. fix this
       b = data[tid+stride]*quick_math;
       data[tid] = a + b;
       data[tid+stride] = a - b;
