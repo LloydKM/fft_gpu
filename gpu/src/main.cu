@@ -46,7 +46,7 @@ __global__ void fftOvgu(comp* hdata) {
   //going up again and calculate ft
   unsigned int stride = 1;
   unsigned int block_size = 2;
-  unsigned int m = 0;
+  unsigned int m = 1;
   comp a,b;
   comp quick_math;
   while (stride < DATASIZE) {
