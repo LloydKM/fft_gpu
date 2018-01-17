@@ -40,10 +40,12 @@ __global__ void fftOvgu(float* hdata, const int hdata_size) {
   }
 
   //TODO: Sync threadblocks
-  finished_threads += 1;
-  while (finished_threads < DATASIZE) {}
+  _syncthreads();
 
   //going up again and calculate ft
+
+  //copy back shared memory
+  hdata[tid] = data[tid];
 }
 
 //program entry point
@@ -92,6 +94,11 @@ int main(int /*argc*/, char** /*argv*/) {
 
   //run kernel
   fftOvgu<n> <<< num_blocks, num_threads_per_block >>> (data_device, n); 
+  
+  //print result
+  for (int i = 0; i < n; i++) {
+    std::cout << data[i] << std::endl;
+  }
 
   //copy result back
   checkErrorsCuda( cudaMemcpy( data, data_device, sizeof(float) * n, cudaMemcpyDeviceToHost));
