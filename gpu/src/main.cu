@@ -5,10 +5,11 @@
 #include "cuda_util.h"
 
 typedef thrust::complex<float> comp;
+#define ci comp(0,1)
 
 //fft kernel
 template<int DATASIZE>
-__global__ void fftOvgu(comp* hdata, const int hdata_size) {
+__global__ void fftOvgu(comp* hdata) {
   //determine thread id
   unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -43,6 +44,24 @@ __global__ void fftOvgu(comp* hdata, const int hdata_size) {
   __syncthreads();
 
   //going up again and calculate ft
+  unsigned int stride = 1;
+  unsigned int block_size = 2;
+  unsigned int m = 0;
+  comp a,b;
+  comp quick_math;
+  while (stride < DATASIZE) {
+    quick_math = comp(-2,0)*ci*comp(M_PI,0)*comp(m,0)/comp(block_size,0);
+    if ((tid % block_size) < (block_size/2)) {
+      a = data[tid];
+      b = data[tid+stride]*quick_math;
+      data[tid] = a + b;
+      data[tid+stride] = a - b;
+    }    
+    m += 1;
+    block_size*= 2;
+    stride *= 2;
+    __syncthreads();
+  }
 
   //copy back shared memory
   hdata[tid] = data[tid];
@@ -93,7 +112,7 @@ int main(int /*argc*/, char** /*argv*/) {
 
 
   //run kernel
-  fftOvgu<n> <<< num_blocks, num_threads_per_block >>> (data_device, n); 
+  fftOvgu<n> <<< num_blocks, num_threads_per_block >>> (data_device); 
   
   //print result
   for (int i = 0; i < n; i++) {
