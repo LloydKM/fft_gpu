@@ -1,19 +1,19 @@
 #include <cmath>
 #include <iostream>
 #include <algorithm>
+#include <thrust/complex.h>
 #include "cuda_util.h"
+
+typedef thrust::complex<float> comp;
 
 //fft kernel
 template<int DATASIZE>
-__global__ void fftOvgu(float* hdata, const int hdata_size) {
+__global__ void fftOvgu(comp* hdata, const int hdata_size) {
   //determine thread id
   unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
 
   //shared memory
-  __shared__ float data[DATASIZE];
-
-  //global counter to sync threadblocks
-  __global__ int finished_threads = 0;
+  __shared__ comp data[DATASIZE];
 
   //read data to shared menory by using reversed bitorder
   if (tid == 0) {
@@ -53,9 +53,9 @@ int main(int /*argc*/, char** /*argv*/) {
 
   const int n = 8;
   //generate input data
-  float* data = (float*) malloc(sizeof(float)*n);
+  comp* data = (comp*) malloc(sizeof(comp)*n);
   for (int i = 0; i < n; i++) {
-    data[i] = (float) i+1;
+    data[i] = comp(i+1,0);
   }
 
   //check execution environnement
@@ -76,11 +76,11 @@ int main(int /*argc*/, char** /*argv*/) {
   cudaSetDevice(device_handle);
 
   //init memory aand allocate device memory
-  float* data_device = nullptr;
-  checkErrorsCuda( cudaMalloc((void **) &data_device, sizeof(float) * n));
+  comp* data_device = nullptr;
+  checkErrorsCuda( cudaMalloc((void **) &data_device, sizeof(comp) * n));
 
   //copy device memory
-  checkErrorsCuda( cudaMemcpy( (void*) data_device, data, sizeof(float) * n, cudaMemcpyHostToDevice ));
+  checkErrorsCuda( cudaMemcpy( (void*) data_device, data, sizeof(comp) * n, cudaMemcpyHostToDevice ));
 
   //determine thread layout
   const int MAX_THREADS_PER_BLOCK = devProp.maxThreadsPerBlock;
@@ -101,7 +101,7 @@ int main(int /*argc*/, char** /*argv*/) {
   }
 
   //copy result back
-  checkErrorsCuda( cudaMemcpy( data, data_device, sizeof(float) * n, cudaMemcpyDeviceToHost));
+  checkErrorsCuda( cudaMemcpy( data, data_device, sizeof(comp) * n, cudaMemcpyDeviceToHost));
 
   //clean memory
   checkErrorsCuda( cudaFree( data_device));
