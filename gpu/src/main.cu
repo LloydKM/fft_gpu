@@ -40,7 +40,7 @@ __global__ void fftOvgu(float* hdata, const int hdata_size) {
   }
 
   //TODO: Sync threadblocks
-  _syncthreads();
+  __syncthreads();
 
   //going up again and calculate ft
 
