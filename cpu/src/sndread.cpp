@@ -1,4 +1,4 @@
-#include <sndfile.hh>
+/*#include <sndfile.hh>
 #include <iostream>
 #include <cstring>
 #include "sndread.h"
@@ -25,4 +25,4 @@ std::vector<int> read_file(const char* fname) {
   puts ("") ;
 
   return ret;
-}
+}*/

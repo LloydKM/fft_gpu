@@ -13,6 +13,4 @@ set(SOURCE
 
 set( CMAKE_C_FLAGS "-g -W -Wall -Wno-unused-parameter")
 
-add_executable( foo ${SOURCE})
-
-target_link_libraries(foo sndfile)
+add_executable( main ${SOURCE})
