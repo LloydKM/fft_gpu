@@ -1,6 +1,7 @@
 #include <cmath>
 #include <iostream>
 #include <algorithm>
+#include <chrono>
 #include <thrust/complex.h>
 #include "cuda_util.h"
 
@@ -9,6 +10,7 @@
 	#define M_PI 3.14159265358979323846
 #endif
 
+typedef std::chrono::time_point<std::chrono::high_resolution_clock> tpoint;
 typedef thrust::complex<float> comp;
 #define ci comp(0,1)
 
@@ -125,9 +127,22 @@ int main(int /*argc*/, char** /*argv*/) {
   checkErrorsCuda( cudaMemcpy( data, data_device, sizeof(comp) * n, cudaMemcpyDeviceToHost));
 
   //print result
-  for (int i = 0; i < n; i++) {
+  /*for (int i = 0; i < n; i++) {
 	  std::cout << data[i] << std::endl;
+  }*/
+
+  //run kernel for timing
+  cudaDeviceSynchronize();
+  tpoint t_start = std::chrono::high_resolution_clock::now();
+  
+  for (unsigned int k = 0; k < 1024; k++) {
+    fftOvgu<n> <<< num_blocks, num_threads_per_block >>> (data_device);
   }
+  cudaDeviceSynchronize();
+
+  tpoint t_end = std::chrono::high_resolution_clock::now();
+  double elapsed_time = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+  std::cout << elapsed_time << std::endl;
 
   //clean memory
   checkErrorsCuda( cudaFree( data_device));
