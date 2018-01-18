@@ -4,9 +4,9 @@
 #include <cmath>
 #include <complex>
 #include <iomanip>
+#include <chrono>
 
-#include "sndread.h"
-
+typedef std::chrono::time_point<std::chrono::high_resolution_clock> tpoint;
 typedef std::complex<double> comp;
 #define li comp(0,1)
 #define F_PATH "../src/briOPETH.wav"
@@ -16,15 +16,19 @@ std::vector<comp> fft(std::vector<comp> freqs);
 std::vector<comp> _fft(int n, std::vector<comp> freqs);
 
 int main(int argc, char** argv) {
-  std::vector<int> test = read_file(F_PATH);
-  std::vector<comp> v;
-  for (auto const& val: test) {
-    v.push_back(comp(val,0));
+  std::vector<comp> test;
+  for (int i = 0; i < 1024; i++) {
+    test.push_back(comp(i,0));
   }
-  std::vector<comp> fftv = fft(v);
-  for (auto const& value: fftv) {
-    std::cout << value << std::endl;
+  std::vector<comp> fftv = fft(test);
+  std::cout << fftv[0] << std::endl;
+  tpoint t_start = std::chrono::high_resolution_clock::now();
+  for (int i = 0; i < 1024; i++) {
+    std::vector<comp> fftv = fft(test);
   }
+  tpoint t_end = std::chrono::high_resolution_clock::now();
+  double elapsed_time = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+  std::cout << elapsed_time << std::endl;
 }
 
 std::vector<comp> pad_with_zero(std::vector<comp> v) {
@@ -50,9 +54,9 @@ std::vector<comp> fft(std::vector<comp> freqs) {
     return _fft(n, freqs);
   } else {
     //padding with zeroes
-    std::cout << "padding" << std::endl;
+    //std::cout << "padding" << std::endl;
     std::vector<comp> padded = pad_with_zero(freqs);
-    std::cout << std::endl;
+    //std::cout << std::endl;
     return _fft(padded.size(), padded);
   }
 
