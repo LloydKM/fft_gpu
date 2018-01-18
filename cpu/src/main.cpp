@@ -18,13 +18,13 @@ std::vector<comp> _fft(int n, std::vector<comp> freqs);
 int main(int argc, char** argv) {
   std::vector<comp> test;
   for (int i = 0; i < 1024; i++) {
-    test.push_back(comp(i,0));
+    test.push_back(comp(i+1,0));
   }
   std::vector<comp> fftv = fft(test);
   std::cout << fftv[0] << std::endl;
   tpoint t_start = std::chrono::high_resolution_clock::now();
   for (int i = 0; i < 1024; i++) {
-    std::vector<comp> fftv = fft(test);
+    fftv = fft(test);
   }
   tpoint t_end = std::chrono::high_resolution_clock::now();
   double elapsed_time = std::chrono::duration<double, std::milli>(t_end - t_start).count();
@@ -50,7 +50,7 @@ std::vector<comp> pad_with_zero(std::vector<comp> v) {
 std::vector<comp> fft(std::vector<comp> freqs) {
   int n = freqs.size();
   //check if length is power of two
-  if (n & (n-1) == 0) {
+  if ((n & (n-1)) == 0) {
     return _fft(n, freqs);
   } else {
     //padding with zeroes
