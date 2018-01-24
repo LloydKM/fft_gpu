@@ -14,41 +14,46 @@ typedef std::chrono::time_point<std::chrono::high_resolution_clock> tpoint;
 typedef thrust::complex<float> comp;
 #define ci comp(0,1)
 
+//sort kernel
+template<int DATASIZE> 
+__global__ void sort(comp* hdata, comp* sdata) {
+	//determine thread id
+	unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
+
+	//read data to shared menory by using reversed bitorder
+	if (tid == 0) {
+		sdata[0] = hdata[tid];
+	}
+	else if (tid == DATASIZE - 1) {
+		sdata[DATASIZE - 1] = hdata[tid];
+	}
+	else {
+		unsigned int DATA_SIZE = DATASIZE;
+		unsigned int new_index = 0;
+		int b;
+		for (unsigned int i = 0; i < tid; i++) {
+			b = DATA_SIZE / 2;
+			while (b > 0) {
+				if (new_index >= b) {
+					new_index -= b;
+				}
+				else {
+					new_index += b;
+					break;
+				}
+				b /= 2;
+			}
+		}
+		sdata[new_index] = hdata[tid];
+	}
+
+}
+
 //fft kernel
 template<int DATASIZE>
 __global__ void fftOvgu(comp* hdata) {
   //determine thread id
   unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
-
-  //shared memory
-  __shared__ comp data[DATASIZE];
-
-  //read data to shared menory by using reversed bitorder
-  if (tid == 0) {
-    data[0] = hdata[tid];
-  } else if (tid == DATASIZE - 1) {
-    data[DATASIZE - 1] = hdata[tid];
-  } else {
-    unsigned int DATA_SIZE = DATASIZE;
-    unsigned int new_index = 0;
-    int b;
-    for (unsigned int i = 0; i < tid; i++) {
-      b = DATA_SIZE / 2;
-      while (b > 0) {
-        if (new_index >= b) {
-          new_index -= b;
-        } else {
-          new_index += b;
-          break;
-        }
-        b /= 2;
-      }
-    }
-    data[new_index] = hdata[tid];
-  }
-
-  //TODO: Sync threadblocks
-  __syncthreads();
 
   //going up again and calculate ft
   unsigned int stride = 1;
@@ -62,24 +67,23 @@ __global__ void fftOvgu(comp* hdata) {
     quick_math = thrust::exp(comp(-2,0)*ci*comp(M_PI,0)*comp(m,0)/comp(block_size,0));
     if ((tid % block_size) < (block_size/2)) {
 		  //printf("tid: %d entered\n", tid);
-      a = data[tid];
-	    b = data[tid + stride]*quick_math;
-      data[tid] = a + b;
-      data[tid+stride] = a - b;
+      a = hdata[tid];
+	    b = hdata[tid + stride]*quick_math;
+      hdata[tid] = a + b;
+      hdata[tid+stride] = a - b;
     }    
     block_size*= 2;
     stride *= 2;
-    __syncthreads();
+	//g.sync();
+	__syncthreads();
   }
 
-  //copy back shared memory
-  hdata[tid] = data[tid];
 }
 
 //program entry point
 int main(int /*argc*/, char** /*argv*/) {
 
-  const int n = 8;
+  const int n = 1024;
   //generate input data
   comp* data = (comp*) malloc(sizeof(comp)*n);
   for (int i = 0; i < n; i++) {
@@ -97,7 +101,7 @@ int main(int /*argc*/, char** /*argv*/) {
   //query the device properties
   cudaDeviceProp devProp;
   cudaGetDeviceProperties(&devProp, 0);
-  printDeviceProps(devProp);
+  //printDeviceProps(devProp);
 
   //set the device
   int device_handle = 0;
@@ -106,6 +110,9 @@ int main(int /*argc*/, char** /*argv*/) {
   //init memory aand allocate device memory
   comp* data_device = nullptr;
   checkErrorsCuda( cudaMalloc((void **) &data_device, sizeof(comp) * n));
+
+  comp* data_device_sorted = nullptr;
+  checkErrorsCuda(cudaMalloc((void **)&data_device_sorted, sizeof(comp) * n));
 
   //copy device memory
   checkErrorsCuda( cudaMemcpy( (void*) data_device, data, sizeof(comp) * n, cudaMemcpyHostToDevice ));
@@ -121,18 +128,22 @@ int main(int /*argc*/, char** /*argv*/) {
 
 
   //run kernel
+  sort<n> << < num_blocks, num_threads_per_block >> > (data_device, data_device_sorted);
+  checkErrorsCuda(cudaMemcpy(data, data_device_sorted, sizeof(comp) * n, cudaMemcpyDeviceToHost));
+  cudaDeviceSynchronize();
+  checkErrorsCuda(cudaMemcpy((void*)data_device, data, sizeof(comp) * n, cudaMemcpyHostToDevice));
   fftOvgu<n> <<< num_blocks, num_threads_per_block >>> (data_device); 
 
   //copy result back
   checkErrorsCuda( cudaMemcpy( data, data_device, sizeof(comp) * n, cudaMemcpyDeviceToHost));
 
   //print result
-  /*for (int i = 0; i < n; i++) {
+  for (int i = 0; i < n; i++) {
 	  std::cout << data[i] << std::endl;
-  }*/
+  }
 
   //run kernel for timing
-  cudaDeviceSynchronize();
+  /*cudaDeviceSynchronize();
   tpoint t_start = std::chrono::high_resolution_clock::now();
   
   for (unsigned int k = 0; k < 1024; k++) {
@@ -142,7 +153,7 @@ int main(int /*argc*/, char** /*argv*/) {
 
   tpoint t_end = std::chrono::high_resolution_clock::now();
   double elapsed_time = std::chrono::duration<double, std::milli>(t_end - t_start).count();
-  std::cout << elapsed_time << std::endl;
+  std::cout << elapsed_time << std::endl;*/
 
   //clean memory
   checkErrorsCuda( cudaFree( data_device));
