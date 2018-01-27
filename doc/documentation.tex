@@ -1,0 +1,44 @@
+\documentclass[sigconf]{acmart}
+
+\usepackage{booktabs}
+\usepackage{mathtools}
+\usepackage[utf8]{inputenc}
+
+% Use the "authoryear" citation style, and make sure citations are in [square brackets].
+\citestyle{acmauthoryear}
+\setcitestyle{square}
+
+% A useful command for controlling the number of authors per row.
+% The default value of "authorsperrow" is 2.
+\settopmatter{authorsperrow=4}
+
+\begin{document}
+
+\title{FFT Cuda Implementation}
+\author{Lukas Gehreke}
+
+% This command defines the author string for running heads.
+\renewcommand{\shortauthors}{Gehreke}
+
+\section{FFT}
+Das Projekt, um das es hier geht, ist die FFT (schnelle Fouriertransformation). Das Ziel der FFT ist es, ein digitales Signal, also eine endliche Menge an Datenpunkten, in seine einzelnen Frequentanteile zu zerlegen. Dies ermöglicht zahlreiche Anwendungen, z.B. eine Analyse des Signals oder Audio processing.
+
+\section{Algorithmus}
+Die FFT lässt sich durch folgende Formel beschreiben:
+\[\hat{z}(m) =
+  \begin{cases}
+    \hat{z}_1(m) + \omega_N^m \hat{z}_2(m) \quad \text{für } m < M\\
+    \hat{z}_1(m - M) + \omega_N^m \hat{z}_2(m - M) \quad \text{für } m \geq M
+  \end{cases}
+\]
+Seien $\text{N die Länge des Signals, M = N/2,} \text{ }\omega_N = e^{-2 \pi \imath / N},\text{ }\hat{z}_1(m) \text{ die gerade Koeffizienten, und }\hat{z}_2(m)  \text{ die ungerade Koeffizienten. }$Der Algorithmus arbeitet nach dem Divide and Conquer Prinzip. Die Ausgangsliste wird in zwei Teillisten aufgeteilt. Die eine Liste enthält alle Elemente, die an einem geraden Index stehen, die zweite Liste enthält alle Elemente, die an einem ungeraden Index stehen. Dies baut einen Binärbaum auf, der die Berechnungen vereinfacht. Um nun die schnelle Transformation zu erreichen, muss die Rekursion aufgelöst werden. Dies wird erreicht, indem der Algorithmus in eine Sortier- und eine Kombinationsphase geteilt wird. In der Sortierphase wird für jeden Index i mittels Umkehrung der Bits den neuen index j fest und vertauscht sie paarweise. In der Kombinationsphase wird auf der sortierten Liste die Transformation berechnet, wie sie im Binärbaum aufgelöst werden würde. Zuerst werden die beiden benachbarten Elemente addiert / substrahiert, dann die $2^1$ Elemente, dann die $2^2$ Elemente, usw. Dies ergibt eine Graphenstruktur namens Butterflygraph. 
+
+\section{CUDA Implementierung}
+
+Natürlich bleibt die Idee des Algorithmus gleich. Die Liste der Datenpunkte muss erst sotiert werden, um die Transformation zu berechnen. Hier berechnet man für jede ThreadID (Index in der Liste) die neue Position. Damit es hier nicht zu Race Conditions kommt, weil ein Thread ein Element der Liste überschreibt, welches noch nicht vertauscht wurde, werden der Funktion zwei Arraypointer übergeben und die Daten aus dem ersten Array werden an die neu berechneten Positionen im zweiten Array geschrieben. Mit dem sortierten Array kann dann die Transformation berechnet werden. Hier kommt es allerdings zu einem weiteren Problem: Es müssen erst alle Blöcke mit dem Sortieren fertig sein, bevor die Transformation berechnet werden kann. Deshalb besteht das Programm aus zwei Kerneln, die nacheinander ausgeführt werden. Der erste Kernel sortiert die Liste und stellt somit sicher, dass die Liste bei beliebig vielen Blöcken fertig sortiert wurde, bevor der zweite Kernel gestartet wird.\\ Wurde die Liste dann sortiert, wird mit ihr der zweite Kernel gestartet, der die Transformation berechnet. Damit hier die Baumstruktur simuliert wird, wird $\log_2 N$ über die Liste iteriert, wobei N die länge der Liste ist. Im simulierten Baum haben die einzelnen Blätter eine größe von $2^i$, wobei i=1, ..., $\log_2 N$. Jeder Thread schaut in jeder Iteration, in welchem Blatt er ist und ob er in der linken Hälfte des Blattes ist. Wenn ja, dann berechnet er die Addition und Substraktion für das Element an Position ThreadID und ThreadID + (Blattgröße + 2). Dadurch kommt es allerdings zu einer konstanten Threaddivegence von \#Thread/2. Außerdem kommt es hier ab einer Blattgröße von i=64 zu Bankconflicts. Dies wird an diesem Beispiel deutlich. Wenn der Thread mit ID 0 bei einer Blattgröße von 64 die Transformation berechnet, dann muss er mit dem Element tid + 32 addiert werden. Bei einer Memorybankgröße von 32 stehen beide Elemente and Bankadresse $tid = 0 \% 32 = 0+i/2 \% 32 = tid + i/2$. Dies gilt für $i \geq 64$. Mögliche Verbesserungen wären hier, dass man das Addieren in den Threads in der unteren Hälfte des Blattes ausführt und das Subtrahieren in den Threads der oberen Hälfte. Dies würde zwar die Bankconflicts nicht umgehen, allerdings hätte man keine Threaddivergence mehr.
+
+\section{Performance Analyse}
+
+\section{Ausblick}
+
+\end{document}
